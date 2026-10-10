@@ -229,4 +229,4 @@ contract P2PLendingEscrow is AccessControl, Pausable, ReentrancyGuard {
         if (loanId == 0 || loanId > loanCount) revert InvalidLoanId(loanId);
         return loans[loanId];
     }
-}
+}   
