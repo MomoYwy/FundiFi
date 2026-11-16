@@ -53,7 +53,12 @@ class RiskResponse(BaseModel):
     risk_category: Literal["LOW", "MEDIUM", "HIGH"]
 
 
-@app.get("/health")
+class HealthResponse(BaseModel):
+    status: Literal["ok"]
+    models_loaded: bool
+
+
+@app.get("/health", response_model=HealthResponse)
 def health() -> dict:
     return {"status": "ok", "models_loaded": bool(models)}
 
