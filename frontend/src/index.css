@@ -44,3 +44,15 @@ fieldset:disabled { opacity: .7; }
 .secondary { background: transparent; color: #c2f970; border: 1px solid #52633c; border-radius: 8px; padding: 8px 12px; }
 @media (max-width: 760px) { .layout { grid-template-columns: 1fr; } .top-label { display: none; } main { padding-top: 32px; } }
 @media (max-width: 460px) { .input-grid { grid-template-columns: 1fr; gap: 0; } .card { padding: 20px; } }
+.wallet { margin-left: auto; display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.wallet-warning { background: #302719; color: #f5d894; padding: 10px 24px; font-size: 13px; }
+.result { margin-top: 24px; }
+.action { margin-top: 16px; }
+button:disabled { opacity: .55; cursor: not-allowed; }
+.loan-list { display: grid; gap: 8px; margin-top: 16px; max-height: 220px; overflow-y: auto; }
+.loan-item { text-align: left; background: #130e1e; color: #f8fafc; border: 1px solid #453958; border-radius: 8px; padding: 10px; }
+.lookup { display: flex; gap: 8px; }
+.loan-detail { border-top: 1px solid #453958; margin-top: 20px; padding-top: 16px; font-size: 13px; }
+.loan-detail p { margin-top: 6px; }
+.hash { overflow-wrap: anywhere; }
+.hash a { color: #c2f970; }
