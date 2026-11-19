@@ -4,9 +4,9 @@ This phase adapts the Figma borrower's dark, lime-accented presentation for the 
 
 ## Local setup
 
-1. Install the root Python dependencies and start the API from the repository root: `python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000`.
-2. Run `npm install --prefix frontend` and `npm run dev --prefix frontend`. Use `http://localhost:5173` or `http://localhost:3000`, the origins currently allowed by the backend. Vite may choose another port if these are occupied; that port, `127.0.0.1`, and other hosts are not allowed by the default CORS configuration.
-3. Optionally copy `frontend/.env.example` to `frontend/.env` and set `VITE_API_BASE_URL`. Restart Vite after changing it. The API URL must be reachable by the browser and allow the frontend's exact origin. Use HTTPS for deployments and configure the backend's allowed origins appropriately; do not put secrets in Vite variables.
+Follow the [root startup guide](../README.md) for first-time installation, the `npm run dev` shortcut, and optional API setup. The shortcut fixes the UI to `http://localhost:5173`, an origin allowed by the backend.
+
+Optionally copy `frontend/.env.example` to `frontend/.env` and set `VITE_API_BASE_URL`. Restart Vite after changing it. The API URL must be reachable by the browser and allow the frontend's exact origin. Use HTTPS for deployments and configure the backend's allowed origins appropriately; do not put secrets in Vite variables.
 
 `VITE_HARDHAT_RPC_URL` documents the local RPC endpoint for a later phase; it is not read or connected here. After `npx hardhat compile` at the repository root, the Vite and TypeScript `@artifacts/*` alias can resolve generated Hardhat JSON artifacts, for example `@artifacts/contracts/P2PLendingEscrow.sol/P2PLendingEscrow.json`; no artifact, wallet, or contract is loaded in this phase.
 

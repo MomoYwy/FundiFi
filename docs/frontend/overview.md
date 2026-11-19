@@ -4,12 +4,15 @@ Location: [`frontend/`](../../frontend)
 
 ## What exists today
 
-The frontend is the default Vite React template (`npm create vite@latest -- --template react`) with Tailwind CSS 4 wired in via `@tailwindcss/vite`, plus `ethers` and `axios` installed as dependencies. It has not been customized for FundiFi yet:
+The frontend provides a borrower risk-assessment UI using the FastAPI service:
 
-- `src/App.jsx`, `src/main.jsx`, `src/App.css`, `src/index.css` are the unmodified Vite starter files.
+- The form submits a manually entered wallet address and self-reported history to the risk API.
+- Results are advisory, not loan approvals or identity verification.
 - No MetaMask/wallet connection flow exists.
-- No calls to the `P2PLendingEscrow` contract or to a risk-scoring API exist.
+- No calls to the `P2PLendingEscrow` contract exist.
 - No borrower or lender dashboards exist.
+
+See the [startup guide](../../README.md) to run the UI and API.
 
 ## Stack
 

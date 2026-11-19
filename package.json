@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "dev": "npm run dev --prefix frontend -- --port 5173 --strictPort"
+  },
   "devDependencies": {
     "@nomicfoundation/hardhat-ethers": "^4.2.0",
     "@nomicfoundation/hardhat-ethers-chai-matchers": "^3.0.11",
