@@ -1,6 +1,6 @@
-# FundiFi risk assessment frontend
+# FundiFi frontend
 
-This phase adapts the Figma borrower's dark, lime-accented presentation for the existing `P2PLendingEscrow` architecture: one lender provides the exact principal and the borrower repays the full principal plus interest. There are no pooled loans or installment schedules. The rest of the Figma export contains simulated account and transaction data and is intentionally not exposed as live functionality.
+The borrower form requests an off-chain advisory risk assessment and then permits a wallet-signed loan request. A connected wallet can browse the latest 30 on-chain loans or look up a loan ID, fund an attested request in full, or repay its own active loan in full. There are no pools or installments.
 
 ## Local setup
 
@@ -14,6 +14,14 @@ Optionally copy `frontend/.env.example` to `frontend/.env` and set `VITE_API_BAS
 
 `src/api/schema.d.ts` is generated from FastAPI's OpenAPI schema. With the API running on localhost:8000, run `npm run generate:api --prefix frontend` after changing backend schemas and commit the regenerated file. The client also checks responses at runtime.
 
-The form sends the four fields required by `/predict-risk`. The wallet address is manually entered and is not authenticated. Borrow frequency (number of loans in the previous 90 days) and repayment velocity (share paid on time or early, from 0 to 1) are self-reported: there is no trusted history service. Never invent them. The API's `approved` is displayed only as a model advisory, not a loan approval, on-chain attestation, identity verification, or transaction. Model availability is shown by `/health`; if models are absent, prediction returns 503. Existing training uses synthetic data and is not evidence of real-world model performance.
+## Important limitations
 
-Run `npm run test --prefix frontend`, `npm run typecheck --prefix frontend`, `npm run lint --prefix frontend`, and `npm run build --prefix frontend`.
+The API returns a score, category and advisory boolean, not a risk hash or an on-chain approval. Borrowing and repayment history is self-reported, not verified by a trusted service, and training uses synthetic data. A requested loan is not approved merely because the model returned an eligible result. A separate holder of `RISK_ORACLE_ROLE` must submit an attestation after loan creation; this project does not implement that service or a trusted approval policy. The contract permits funding after **any** valid oracle score, not only an approved score. Users must assess the risks independently. No raw history or identity data is sent on-chain.
+
+The RM amount is converted into native-asset wei using the contract's immutable `rmPerEth`. The contract's actual RM-equivalent must exactly match the amount assessed by the API and remain within the tier; amounts that cannot be represented exactly are rejected. The exact native amount is displayed before signing. Interest is entered in basis points and duration in days; repayment uses the contract's `repaymentAmount` rather than a monthly schedule. A transaction can still fail if on-chain state changes before confirmation. If confirmation is interrupted, check its hash on the network before retrying.
+
+Disconnect removes the app's local connection state; it does not revoke wallet permissions. Revoke them in MetaMask if needed. Account or chain changes invalidate the current assessment and loan view.
+
+## Checks
+
+Run `npm run test --prefix frontend`, `npm run typecheck --prefix frontend`, `npm run lint --prefix frontend`, and `npm run build --prefix frontend`. To run the optional real-contract integration test, start an isolated local Hardhat node on port 18545 (`npx hardhat node --hostname 127.0.0.1 --port 18545`), then in another PowerShell terminal run `$env:FUNDIFI_RPC_TEST='http://127.0.0.1:18545'; npm run test --prefix frontend -- src/web3/escrow.integration.test.ts`. The test deploys its own contract and uses the node's unlocked test accounts.
