@@ -21,3 +21,22 @@ it('distinguishes rejection and mined failure from success', async () => {
   await act(async () => { resolve({ status: 0 }); await running })
   expect(result.current.state).toMatchObject({ status: 'error', hash: '0x123' })
 })
+
+it('does not send a second transaction while the first is awaiting confirmation', async () => {
+  vi.stubEnv('VITE_ESCROW_ADDRESS', '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
+  vi.stubEnv('VITE_CHAIN_ID', '31337')
+  const { result } = renderHook(() => useTransaction())
+  let resolve!: (receipt: { status: number; hash: string }) => void
+  const wait = () => new Promise<{ status: number; hash: string }>(r => { resolve = r })
+  const tx = { hash: '0x123', wait } as TransactionResponse
+  const send = vi.fn(async () => tx)
+  let first!: Promise<boolean>
+  act(() => { first = result.current.run(send) })
+  await waitFor(() => expect(result.current.state.status).toBe('pending'))
+  let second = true
+  await act(async () => { second = await result.current.run(send) })
+  expect(second).toBe(false)
+  expect(send).toHaveBeenCalledTimes(1)
+  await act(async () => { resolve({ status: 1, hash: '0x123' }); expect(await first).toBe(true) })
+  expect(result.current.state.status).toBe('success')
+})

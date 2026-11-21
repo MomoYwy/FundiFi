@@ -2,6 +2,10 @@
 
 The borrower form requests an off-chain advisory risk assessment and then permits a wallet-signed loan request. A connected wallet can browse the latest 30 on-chain loans or look up a loan ID, fund an attested request in full, or repay its own active loan in full. There are no pools or installments.
 
+Borrower dashboard, marketplace, borrower-loan list, lender portfolio, and loan-detail views use the typed API and escrow read/transaction helpers. Wallet, transaction, activity, and contract-inspector panels are available. View modes are presentation only and do not grant roles. My Loans and My Portfolio filter only the latest 30 requests, not a complete account history; use loan ID lookup for older loans. Activity reads contract-wide confirmed lifecycle events on demand over a bounded range. The inspector can read loan count and current block from the connected network; it does not establish contract identity or audit status. AI Insights and Compliance show unavailable metrics, not live analytics or evidence of regulatory compliance. Support ticket forms and auto-invest settings are disabled; no data is submitted or saved. Compliance overrides, blacklisting, yield claims and auto-invest remain unavailable.
+
+Loan details can load lifecycle events on demand for the selected loan. The read covers at most the latest 2,000 blocks ending one block behind the observed chain head (at least two confirmations); it is not an index, complete history, automatic poller, or guarantee against reorganizations. RPC providers may limit log queries; failures are reported rather than shown as empty results.
+
 ## Local setup
 
 1. Install dependencies with `npm install` and `npm install --prefix frontend`. Compile the escrow with `npx hardhat compile`. After contract changes, run `npm run generate:abi --prefix frontend` to regenerate the checked-in ABI from the Hardhat artifact.
@@ -22,3 +26,5 @@ Disconnect removes the app's local connection state; it does not revoke wallet p
 ## Checks
 
 Run `npm run test --prefix frontend`, `npm run typecheck --prefix frontend`, `npm run lint --prefix frontend`, and `npm run build --prefix frontend`. To run the optional real-contract integration test, start an isolated local Hardhat node on port 18545 (`npx hardhat node --hostname 127.0.0.1 --port 18545`), then in another PowerShell terminal run `$env:FUNDIFI_RPC_TEST='http://127.0.0.1:18545'; npm run test --prefix frontend -- src/web3/escrow.integration.test.ts`. The test deploys its own contract and uses the node's unlocked test accounts.
+
+The ordinary frontend suite skips the local-RPC integration test unless `FUNDIFI_RPC_TEST` is set. Before using a testnet deployment, independently verify its address, network and oracle setup, then exercise wallet connect and account/network changes, request, oracle attestation, exact funding, repayment, rejection and failed transaction handling. Automated mocks and local tests do not establish live testnet behavior.
