@@ -5,6 +5,27 @@ import type { LoanTier } from '../loan'
 
 export const PENDING_RISK = (1n << 64n) - 1n
 const SCALE = 10n ** 18n
+export const MAX_EVENT_BLOCKS = 2000
+export const EVENT_CONFIRMATIONS = 2
+const lifecycleNames = ['LoanRequested', 'LoanFunded', 'LoanRepaid', 'LoanDefaulted'] as const
+export type LifecycleEventName = typeof lifecycleNames[number]
+export interface LifecycleEvent {
+  name: LifecycleEventName
+  loanId: bigint
+  blockNumber: number
+  transactionHash: string
+  logIndex: number
+}
+export interface LifecycleEvents {
+  events: LifecycleEvent[]
+  fromBlock: number | null
+  toBlock: number | null
+  headBlock: number
+}
+export interface ContractStatus {
+  loanCount: bigint
+  blockNumber: number
+}
 export interface Loan {
   id: bigint
   borrower: string
@@ -39,8 +60,13 @@ export async function requestLoan(signer: JsonRpcSigner, principal: bigint, rate
 }
 
 export async function readLoan(signer: JsonRpcSigner, id: bigint): Promise<Loan> {
-  if (id < 1n || id > await contract(signer).loanCount()) throw new Error('Loan ID not found.')
-  const row = await contract(signer).loans(id)
+  const escrow = contract(signer)
+  if (id < 1n || id > await escrow.loanCount()) throw new Error('Loan ID not found.')
+  return readLoanRow(escrow, id)
+}
+
+async function readLoanRow(escrow: Contract, id: bigint): Promise<Loan> {
+  const row = await escrow.loans(id)
   return {
     id: row.id, borrower: row.borrower, lender: row.lender, state: row.state,
     principal: row.principal, interestRate: row.interestRate, duration: row.duration,
@@ -49,9 +75,46 @@ export async function readLoan(signer: JsonRpcSigner, id: bigint): Promise<Loan>
 }
 
 export async function latestLoans(signer: JsonRpcSigner): Promise<Loan[]> {
-  const count: bigint = await contract(signer).loanCount()
+  const escrow = contract(signer)
+  const count: bigint = await escrow.loanCount()
   const ids = Array.from({ length: Number(count < 30n ? count : 30n) }, (_, index) => count - BigInt(index))
-  return Promise.all(ids.map(id => readLoan(signer, id)))
+  return Promise.all(ids.map(id => readLoanRow(escrow, id)))
+}
+
+export async function readContractStatus(signer: JsonRpcSigner): Promise<ContractStatus> {
+  const escrow = contract(signer)
+  const [loanCount, blockNumber] = await Promise.all([escrow.loanCount(), signer.provider.getBlockNumber()])
+  return { loanCount, blockNumber }
+}
+
+export async function readLifecycleEvents(
+  signer: JsonRpcSigner,
+  options: { loanId?: bigint; blockCount?: number; toBlock?: number } = {},
+): Promise<LifecycleEvents> {
+  const { loanId, blockCount = MAX_EVENT_BLOCKS, toBlock } = options
+  if (loanId !== undefined && loanId < 1n) throw new Error('Loan ID must be positive.')
+  if (!Number.isSafeInteger(blockCount) || blockCount < 1 || blockCount > MAX_EVENT_BLOCKS) throw new Error(`Block count must be between 1 and ${MAX_EVENT_BLOCKS}.`)
+  if (toBlock !== undefined && (!Number.isSafeInteger(toBlock) || toBlock < 0)) throw new Error('Invalid ending block.')
+  const headBlock = await signer.provider.getBlockNumber()
+  const confirmedHead = headBlock - (EVENT_CONFIRMATIONS - 1)
+  if (confirmedHead < 0) {
+    if (toBlock !== undefined) throw new Error('No confirmed block is available yet.')
+    return { events: [], fromBlock: null, toBlock: null, headBlock }
+  }
+  const end = toBlock ?? confirmedHead
+  if (end > confirmedHead) throw new Error('Ending block is not sufficiently confirmed.')
+  const fromBlock = Math.max(0, end - blockCount + 1)
+  const escrow = contract(signer)
+  const groups = await Promise.all(lifecycleNames.map(async name => {
+    const logs = await escrow.queryFilter(escrow.filters[name](loanId ?? null), fromBlock, end)
+    return logs.map(log => {
+      const parsed = escrow.interface.parseLog(log)
+      if (!parsed || parsed.name !== name) throw new Error(`Could not decode ${name} event.`)
+      return { name, loanId: parsed.args.loanId as bigint, blockNumber: log.blockNumber, transactionHash: log.transactionHash, logIndex: log.index }
+    })
+  }))
+  const events = groups.flat().sort((a, b) => b.blockNumber - a.blockNumber || b.logIndex - a.logIndex)
+  return { events, fromBlock, toBlock: end, headBlock }
 }
 
 export async function fundLoan(signer: JsonRpcSigner, id: bigint, expectedPrincipal: bigint): Promise<TransactionResponse> {

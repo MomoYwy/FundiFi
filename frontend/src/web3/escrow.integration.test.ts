@@ -1,10 +1,10 @@
 import { readFileSync } from 'node:fs'
 import { Contract, ContractFactory, JsonRpcProvider, parseEther } from 'ethers'
 import { afterAll, describe, expect, it, vi } from 'vitest'
-import { fundLoan, latestLoans, PENDING_RISK, quotePrincipal, readLoan, repayLoan, repaymentAmount, requestLoan } from './escrow'
+import { fundLoan, latestLoans, PENDING_RISK, quotePrincipal, readLifecycleEvents, readLoan, repayLoan, repaymentAmount, requestLoan } from './escrow'
 
 describe.skipIf(!process.env.FUNDIFI_RPC_TEST)('local escrow integration', () => {
-  const provider = new JsonRpcProvider(process.env.FUNDIFI_RPC_TEST)
+  const provider = new JsonRpcProvider(process.env.FUNDIFI_RPC_TEST, undefined, { cacheTimeout: -1 })
   afterAll(() => { provider.destroy(); vi.unstubAllEnvs() })
 
   it('requests, attests, funds and repays exact contract values', async () => {
@@ -39,6 +39,17 @@ describe.skipIf(!process.env.FUNDIFI_RPC_TEST)('local escrow integration', () =>
     await expect(repayLoan(borrower, 1n, due - 1n)).rejects.toThrow('amount due changed')
     await (await repayLoan(borrower, 1n, due)).wait()
     expect((await readLoan(borrower, 1n)).state).toBe(2n)
+    await (await requestLoan(borrower, principal, 1200, 1, 'tier1')).wait()
+    await (await oracleContract.submitRiskAssessment(2n, parseEther('0.2'), `0x${'22'.repeat(32)}`)).wait()
+    await (await fundLoan(lender, 2n, principal)).wait()
+    await provider.send('evm_increaseTime', [86401])
+    await (await oracleContract.markDefaulted(2n)).wait()
+    await provider.send('evm_mine', [])
+    const events = await readLifecycleEvents(borrower)
+    expect(events.events.map(event => event.name)).toEqual([
+      'LoanDefaulted', 'LoanFunded', 'LoanRequested', 'LoanRepaid', 'LoanFunded', 'LoanRequested',
+    ])
+    expect((await readLifecycleEvents(borrower, { loanId: 1n })).events.map(event => event.name)).toEqual(['LoanRepaid', 'LoanFunded', 'LoanRequested'])
     const uneven = await factory.deploy(parseEther('3000'))
     await uneven.waitForDeployment()
     vi.stubEnv('VITE_ESCROW_ADDRESS', await uneven.getAddress())
