@@ -22,6 +22,15 @@
 .env.*
 !.env.example
 
+# Local datasets, research outputs, and Kaggle credentials
+/data/
+/datasets/
+/research-artifacts/
+/backend/data/
+/backend/datasets/
+/backend/research-artifacts/
+kaggle.json
+
 # Hardhat coverage reports
 /coverage
 
