@@ -12,6 +12,8 @@ Location: [`backend/`](../../backend/), dependencies in [`requirements.txt`](../
 | `backend/models/kmeans_model.pkl`                        | Dict with the K-Means model, scaler, suspicious cluster ids and distance threshold (generated).              |
 
 To train on a Kaggle dataset, see [`kaggle-training.md`](./kaggle-training.md).
+For the separate offline Lending Club experiment, see
+[`lending-club-research.md`](./lending-club-research.md).
 
 ## Run
 
