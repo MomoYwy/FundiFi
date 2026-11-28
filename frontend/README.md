@@ -8,7 +8,7 @@ Loan details can load lifecycle events on demand for the selected loan. The read
 
 ## Local setup
 
-Follow the [root startup guide](../README.md) for first-time installation, the `npm run dev` shortcut, and optional API setup. The shortcut fixes the UI to `http://localhost:5173`, an origin allowed by the backend.
+Follow the [root startup guide](../README.md) for first-time installation and `npm run demo`, which starts and seeds the complete disposable local system. `npm run dev` starts only the UI on `http://localhost:5173`, an origin allowed by the backend.
 
 Optionally copy `frontend/.env.example` to `frontend/.env` and set `VITE_API_BASE_URL`. Restart Vite after changing it. The API URL must be reachable by the browser and allow the frontend's exact origin. Use HTTPS for deployments and configure the backend's allowed origins appropriately; do not put secrets in Vite variables.
 

@@ -1,6 +1,31 @@
 # FundiFi
 
-FundiFi is a prototype peer-to-peer lending platform. The current UI provides an off-chain risk assessment; wallet connection and on-chain transactions are not yet integrated.
+FundiFi is a prototype peer-to-peer lending platform with off-chain risk assessment and wallet-signed on-chain transactions.
+
+## Start the complete local demo
+
+From the repository root in PowerShell, install dependencies once:
+
+```powershell
+npm ci
+npm ci --prefix frontend
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+```
+
+Then start everything with:
+
+```powershell
+npm run demo
+```
+
+The command compiles contracts, starts a fresh local Hardhat node, deploys and seeds a demo escrow, and starts the API and frontend. It passes the new address to Vite without changing `frontend\.env`. Open [http://localhost:5173](http://localhost:5173); keep the terminal open and press **Ctrl+C** to stop. Ports 18545, 8000 and 5173 must be free. Each run creates a disposable chain; all loans and transactions disappear when it stops.
+
+In MetaMask, add/select a local network with RPC URL `http://127.0.0.1:18545`, chain ID `31337`, and currency symbol `ETH`. Use only a separate test wallet and the public Hardhat test accounts, never real funds. The seed table identifies borrower and lender account indices; import a corresponding local test account into that test wallet to see its loans. Local accounts and keys are publicly known. After a node restart, MetaMask may retain old transaction history/nonces: in the test account's settings use **Clear activity tab data** if transactions have nonce errors. This clears local activity, not blockchain state; never use it to troubleshoot real funds without checking the network first.
+
+If MetaMask reports **RPC endpoint returned too many errors**, the wallet's RPC endpoint is failing; the message alone does not establish why. Confirm the demo is still running, that MetaMask's selected network uses the URL and chain ID above, wait for MetaMask's indicated retry period, then refresh. For a different network, check its RPC provider or select a working endpoint in MetaMask. If the contract is missing, restart the demo and reload the page; an address from a previous node is not a persistent deployment.
+
+The API uses synthetic models and seeded scores are illustrative, not loan approvals. See the [frontend guide](frontend/README.md) for details and manual setup.
 
 ## Start the UI
 
@@ -46,7 +71,7 @@ Keep both terminals open. Check [http://localhost:8000/health](http://localhost:
 .\.venv\Scripts\python.exe backend\train_model.py
 ```
 
-The supplied training process uses synthetic data; its results are not evidence of real-world credit performance. The UI's result is advisory, not a loan approval or identity verification. The wallet address is manually entered and its ownership is not verified.
+The supplied training process uses synthetic data; its results are not evidence of real-world credit performance. The UI's result is advisory, not a loan approval or identity verification.
 
 ### Troubleshooting
 
