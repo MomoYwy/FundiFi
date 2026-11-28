@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "dev": "npm run dev --prefix frontend -- --port 5173 --strictPort"
+    "dev": "npm run dev --prefix frontend -- --port 5173 --strictPort",
+    "demo": "node scripts/start-local-demo.js"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-ethers": "^4.2.0",

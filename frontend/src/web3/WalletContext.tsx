@@ -100,10 +100,17 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     ])
     if (!Array.isArray(accounts) || typeof accounts[0] !== 'string' || getAddress(accounts[0]) !== account) throw new Error('Wallet account changed. Reconnect and try again.')
     if (typeof chain !== 'string' || BigInt(chain) !== expected) throw new Error(`Switch your wallet to chain ${expected}.`)
-    const provider = new BrowserProvider(injected)
-    const signer = await provider.getSigner(account)
-    if (await provider.getCode(getConfig().address) === '0x') throw new Error('No contract is deployed at the configured address on this network.')
-    return signer
+    try {
+      const provider = new BrowserProvider(injected)
+      const signer = await provider.getSigner(account)
+      if (await provider.getCode(getConfig().address) === '0x') throw new Error('No contract is deployed at the configured address on this network.')
+      return signer
+    } catch (error) {
+      if (error instanceof Error && /RPC endpoint returned too many errors/i.test(error.message)) {
+        throw new Error('MetaMask cannot reach its RPC endpoint. Wait for its retry period, then refresh. For the local demo, check that the Hardhat node is running and MetaMask uses http://127.0.0.1:18545 (chain 31337). For other networks, check or change the RPC endpoint in MetaMask.')
+      }
+      throw error
+    }
   }, [account])
 
   const value = useMemo(() => ({ account, chainId, error, connecting, connect, disconnect, getSigner }), [account, chainId, error, connecting, connect, disconnect, getSigner])

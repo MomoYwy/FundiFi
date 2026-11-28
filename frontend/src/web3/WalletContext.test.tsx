@@ -7,7 +7,7 @@ function Probe() {
   const wallet = useWallet()
   return <><p>{wallet.account || 'disconnected'}:{wallet.chainId?.toString() || 'none'}</p><p role="alert">{wallet.error}</p>
     <button onClick={() => void wallet.connect()}>Connect</button><button onClick={wallet.disconnect}>Disconnect</button>
-    <button onClick={() => void wallet.getSigner().catch(() => { document.title = 'signer rejected' })}>Sign</button></>
+    <button onClick={() => void wallet.getSigner().catch((error: Error) => { document.title = error.message })}>Sign</button></>
 }
 
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.unstubAllEnvs() })
@@ -31,7 +31,7 @@ it('tracks wallet events, enforces network, and locally disconnects', async () =
   listeners.get('chainChanged')?.(chain)
   await screen.findByText(/:1$/)
   fireEvent.click(screen.getByText('Sign'))
-  await waitFor(() => expect(document.title).toBe('signer rejected'))
+  await waitFor(() => expect(document.title).toBe('Switch your wallet to chain 31337.'))
   listeners.get('accountsChanged')?.(['0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'])
   await screen.findByText(/0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB:1/)
   listeners.get('accountsChanged')?.([])
@@ -58,7 +58,28 @@ it('rejects wallet use when no contract is deployed at the configured address', 
   fireEvent.click(screen.getByText('Connect'))
   await screen.findByText(/:31337$/)
   fireEvent.click(screen.getByText('Sign'))
-  await waitFor(() => expect(document.title).toBe('signer rejected'))
+  await waitFor(() => expect(document.title).toBe('No contract is deployed at the configured address on this network.'))
+})
+
+it('explains an unhealthy MetaMask RPC endpoint when reading the contract', async () => {
+  const address = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+  vi.stubGlobal('ethereum', {
+    request: vi.fn(async ({ method }: { method: string }) => {
+      if (method === 'eth_chainId') return '0x7a69'
+      if (method === 'eth_getCode') throw { code: -32002, message: 'RPC endpoint returned too many errors, retrying in 0.5 minutes. Consider using a different RPC endpoint.' }
+      if (method === 'eth_accounts' || method === 'eth_requestAccounts') return [address]
+      throw new Error(`Unexpected method ${method}`)
+    }),
+    on: vi.fn(), removeListener: vi.fn(),
+  })
+  vi.stubEnv('VITE_ESCROW_ADDRESS', address)
+  vi.stubEnv('VITE_CHAIN_ID', '31337')
+  document.title = ''
+  render(<WalletProvider><Probe /></WalletProvider>)
+  fireEvent.click(screen.getByText('Connect'))
+  await screen.findByText(/:31337$/)
+  fireEvent.click(screen.getByText('Sign'))
+  await waitFor(() => expect(document.title).toContain('MetaMask cannot reach its RPC endpoint'))
 })
 
 it('reports a rejected wallet connection', async () => {

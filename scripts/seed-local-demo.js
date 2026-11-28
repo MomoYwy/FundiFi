@@ -44,7 +44,7 @@ export async function assertLocalHardhat(provider) {
   }
 }
 
-async function seed(provider) {
+export async function seed(provider) {
   await assertLocalHardhat(provider)
   const artifact = JSON.parse(await readFile(
     new URL('../artifacts/contracts/P2PLendingEscrow.sol/P2PLendingEscrow.json', import.meta.url), 'utf8',
@@ -97,6 +97,7 @@ async function seed(provider) {
   }
   await provider.send('evm_mine', [])
   console.table(summary)
+  return escrow.getAddress()
 }
 
 async function main() {

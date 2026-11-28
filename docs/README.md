@@ -6,6 +6,7 @@ This folder documents the parts of the system that currently exist in the reposi
 
 - [`contracts/P2PLendingEscrow.md`](./contracts/P2PLendingEscrow.md) — Reference for the `P2PLendingEscrow` smart contract: state machine, roles, functions, events, errors, storage layout, and security notes.
 - [`testing/hardhat-tests.md`](./testing/hardhat-tests.md) — How the Hardhat/Mocha test suite is set up, what it covers, and how to run it.
+- [`testing/ui-business-logic-template.md`](./testing/ui-business-logic-template.md) — Reusable procedure for local UI business-logic checks with screenshots.
 - [`frontend/overview.md`](./frontend/overview.md) — Current state of the React/Vite frontend scaffold.
 - [`backend/overview.md`](./backend/overview.md) — Reference for the FastAPI risk API and training script.
 - [`backend/kaggle-training.md`](./backend/kaggle-training.md) — Running training on Kaggle and moving to a real Kaggle dataset.
